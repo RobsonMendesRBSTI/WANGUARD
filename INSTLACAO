@@ -1,0 +1,8 @@
+INSTALACAO WANGUARD
+
+- apt install tcpdump
+- tcpdump -i any udp
+- tcpdump -i any udp -c 1000
+- tcpdump -G 10 -i any udp -c 1000
+- tcpdump -i ens33 host 10.99.200.0 udp -nnn
+- 
