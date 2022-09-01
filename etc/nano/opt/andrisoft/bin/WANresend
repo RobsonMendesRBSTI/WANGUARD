@@ -1,0 +1,21 @@
+## nano /opt/andrisoft/bin/WANresend
+
+#!/bin/sh
+
+#Listar IDs das rotas ativas:
+query_sql() {
+        mysql -sN  -u root andrisoft -s -B -N -e "SELECT \`id\` FROM \`quagga\` WHERE \`status\` = 1;"
+}
+
+#Contar os IDs
+num=$(query_sql | wc -l)
+
+#Executar WANbgp resend  em cada ID
+sleep 2
+count=1
+until [ $count -gt $num ]
+do
+   id=$(query_sql |  sed -n ""$count"p")
+   /usr/bin/perl /opt/andrisoft/bin/WANbgp resend $id
+    count=$(( $count + 1 ))
+done
