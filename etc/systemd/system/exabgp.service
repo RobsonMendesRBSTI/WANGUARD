@@ -1,0 +1,41 @@
+##/etc/systemd/system/exabgp.service
+
+[Unit]
+Description=ExaBGP
+Documentation=man:exabgp(1)
+Documentation=man:exabgp.conf(5)
+Documentation=https://github.com/Exa-Networks/exabgp/wiki
+After=network.target
+ConditionPathExists=/etc/exabgp/exabgp.conf
+
+[Service]
+User=exabgp
+Group=exabgp
+Environment=exabgp_daemon_daemonize=false
+#Environment=exabgp_tcp_bind=0.0.0.0
+#Environment=exabgp_tcp_port=179
+PermissionsStartOnly=true
+ExecStartPre=mkfifo /run/exabgp.in
+ExecStartPre=mkfifo /run/exabgp.out
+ExecStartPre=mkfifo /var/run/exabgp.cmd
+ExecStartPre=chmod 600 /run/exabgp.in
+ExecStartPre=chmod 600 /run/exabgp.out
+ExecStartPre=chmod 666 /var/run/exabgp.cmd
+ExecStartPre=chown exabgp.exabgp /run/exabgp.in
+ExecStartPre=chown exabgp.exabgp /run/exabgp.out
+ExecStartPre=chown exabgp.exabgp /var/run/exabgp.cmd
+ExecStart=/usr/local/bin/exabgp /etc/exabgp/exabgp.conf
+ExecReload=/bin/kill -USR1 $MAINPID
+ExecReload=rm /run/exabgp.cmd
+ExecReload=rm /run/exabgp.out
+ExecReload=rm /run/exabgp.in
+ExecStartPost=/bin/bash /opt/andrisoft/bin/WANresend
+ExecStopPost=rm /run/exabgp.cmd
+ExecStopPost=rm /run/exabgp.in
+ExecStopPost=rm /run/exabgp.out
+Restart=always
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target
