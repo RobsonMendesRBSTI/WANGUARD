@@ -1,0 +1,87 @@
+..................
+|ExaBGP - Install|
+''''''''''''''''''
+OS=debian 11 net-intall
+-----------------------------------------------------------------------------------------------------------------
+-Com o debian instalado, atualize o sistema = [apt update]
+
+-Instale a última versão do Python = [apt install pip (apt install python3-pip)]
+
+-Instale socat = [apt install socat] - Necessário para arquivo de log
+
+-Instale a última versão do ExaBGP = (A partir do debain 10, usar o repositório do python
+					https://pypi.org/project/exabgp/) [pip install -U exabgp]
+OBS: RODE UM APT UPDATE E UPGRADE PARA NÃO TER INSTALAÇÃO OBSOLETA DO REPOSITÓRIO.
+------------------------------------------------------------------------------------------------------------------
+-Configure o arquivo localizado em /etc/exabgp/exabgp.conf | Insira o seguinte cabeçalho:
+					
+				             process announce-routes {
+     					     run /usr/bin/socat stdout pipe:/var/run/exabgp.cmd;
+                                             encoder json;
+                                        }
+OBS: SEM O ; NO FINAL DO CÓDIGO, O EXABGP NÃO RECONHECE E GERA UM ERRO. OLHAR A SYNTAXE.
+------------------------------------------------------------------------------------------------------------------
+-Configure o serviço para que o processo do ExaBGP execute por si. Em /lib/systemd/system/exabgp.service insira:
+
+[Unit]
+Description=ExaBGP
+Documentation=man:exabgp(1)
+Documentation=man:exabgp.conf(5)
+Documentation=https://github.com/Exa-Networks/exabgp/wiki
+After=network.target
+ConditionPathExists=/etc/exabgp/exabgp.conf
+
+[Service]
+User=exabgp
+Group=exabgp
+Environment=exabgp_daemon_daemonize=false
+PermissionsStartOnly=true
+#-----------------------------------------------------------
+#-----------ExecStartPre------------------------------------
+#-----------Mkfifo------------------------------------------
+ExecStartPre=mkfifo /run/exabgp.in
+ExecStartPre=mkfifo /run/exabgp.out
+ExecStartPre=mkfifo /run/exabgp.cmd
+#-----------Chmod-------------------------------------------
+ExecStartPre=chmod 600 /run/exabgp.in
+ExecStartPre=chmod 600 /run/exabgp.out
+ExecStartPre=chmod 666 /run/exabgp.cmd
+#-----------Chown-------------------------------------------
+ExecStartPre=chown exabgp.exabgp /run/exabgp.in
+ExecStartPre=chown exabgp.exabgp /run/exabgp.out
+ExecStartPre=chown exabgp.exabgp /run/exabgp.cmd
+#-----------ExecStart-[file-execute]------------------------
+ExecStart=/usr/local/bin/exabgp /etc/exabgp/exabgp.conf
+#-----------Reload-[restartallconfig-newfiles]--------------
+ExecReload=/bin/kill -USR1 $MAINPID
+Restart=always
+ExecReload=rm /run/exabgp.cmd
+ExecReload=rm /run/exabgp.out
+ExecReload=rm /run/exabgp.in
+ExecStopPost=rm /run/exabgp.in
+ExecStopPost=rm /run/exabgp.out
+ExecStopPost=rm /run/exabgp.cmd
+#-----------------------------------------------------------
+#ExecStartPost=/bin/bash /opt/andrisoft/bin/WANresend
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target
+
+					
+OBS: DESCOMENTE A LINHA #ExecStartPost=/bin/bash /opt/andrisoft/bin/WANresend CASO TENHA 
+O ARQUIVO CONFIGURADO (NECESSÁRIO PARA O FUNCIONAMENTO DO WANGUARD)
+--------------------------------------------------------------------------------------------------------------------
+-Execute o daemon [env exabgp.log.destination=syslog exabgp.daemon.daemonize=true exabgp /etc/exabgp/exabgp.conf]
+
+-Verifique o serviço [systemctl status exabgp]. Por si o serviço roda o reload para atualizar o aquivo e alera-
+ções feitas no serviço, caso necessário rode [systemctl start exabgp] ou [systemctl reload exabgp]. Se rodar esses
+dois últimos comandos irá travar o serviço, sendo necessário repetir os passos anteriores para que a instalação
+volte ao normal.
+--------------------------------------------------------------------------------------------------------------------
+-Para mais informações acessar:
+
+https://github.com/Exa-Networks/exabgp/wiki/Controlling-ExaBGP-:-interacting-from-the-API
+https://www.andrisoft.com/docs/wanguard/8.0/Appendix_4__Network_Integration_Guideline_for_Wanguard_Filter.html
+https://github.com/Exa-Networks/exabgp				
