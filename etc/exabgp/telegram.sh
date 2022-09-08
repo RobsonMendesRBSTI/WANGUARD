@@ -1,5 +1,5 @@
-- nano /opt/andrisoft/bin/telegram.sh
-
+## nano /opt/andrisoft/bin/telegram.sh
+## curl -s --max-time 10 -d "chat_id=-1001533138922&disable_web_page_preview=1&text=WANGUARD: Ataque detectado contra o prefixo TESTE" https://api.telegram.org/bot747889846:AAEbNzmHVU7pEl1Gp3Y3j0VvoI7g4Sot7Kc/sendMessage > /dev/null
 
 #!/usr/bin/env bash
 
