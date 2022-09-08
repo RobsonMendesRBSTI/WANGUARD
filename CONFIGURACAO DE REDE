@@ -1,0 +1,22 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+allow-hotplug ens33
+iface ens33 inet static
+      address 10.223.1.230
+      netmask 255.255.255.252
+      gateway 10.223.1.229
+
+iface ens33 inet6 static
+      pre-up modprobe ipv6
+      address 2804:1278:4000:1f::2/64
+      gateway 2804:1278:4000:1f::1
+      dns-nameservers 2804:10:10::10
+      dns-nameservers 2804:10:10::20
