@@ -11,6 +11,10 @@ OS=debian 11 net-intall
 
 -Instale a última versão do ExaBGP = (A partir do debain 10, usar o repositório do python
 					https://pypi.org/project/exabgp/) [pip install -U exabgp]
+-Adicionar o usuário exabgp = adduser exabgp (Em caso de problema editar o arquivo [nano ~/.bashrc] e adicionar
+a seguinte linha no arquivo: export PATH="$PATH:/usr/sbin/" | Depois rode o comando [source ~/.bashrc] e o coman-
+do adduser iá vontar a funcionar.
+
 OBS: RODE UM APT UPDATE E UPGRADE PARA NÃO TER INSTALAÇÃO OBSOLETA DO REPOSITÓRIO.
 ------------------------------------------------------------------------------------------------------------------
 -Configure o arquivo localizado em /etc/exabgp/exabgp.conf | Insira o seguinte cabeçalho:
