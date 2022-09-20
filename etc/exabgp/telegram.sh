@@ -29,9 +29,10 @@ UNITATACKPEAK=$6
 
 #------
 #foi usado o site urlencoder.io
+#caso necessário, use este site https://www.urlencoder.org/ para escrever o código mais rápido.
 
 
-cat | curl -s --max-time $TIMEOUT -d "chat_id=$USERID&disable_web_page_preview=1&text=O%20Wanguard%20detectou%20anomalias%20de%20ataque%20com%20os%20seguintes%20detalhes%3A%0ASensor%3A%20$SE$
+cat | curl -s --max-time $TIMEOUT -d "chat_id=$USERID&disable_web_page_preview=1&text=Sensor%3A%20$SENSOR%0AInterface%3A%20$INTERFACE%0AIP%3A%20$PREFIX%0AVetor%3A%20$VECTOR%0AAnomaliaID%3A%20$ANOMALYID%0APico%3A%20$UNITATACKPEAK" https://api.telegram.org/bot$KEY/sendMessage
 
 sleep 3
 
