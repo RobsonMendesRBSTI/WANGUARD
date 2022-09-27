@@ -17,7 +17,8 @@ do adduser iá vontar a funcionar.
 
 OBS: RODE UM APT UPDATE E UPGRADE PARA NÃO TER INSTALAÇÃO OBSOLETA DO REPOSITÓRIO.
 ------------------------------------------------------------------------------------------------------------------
--Configure o arquivo localizado em /etc/exabgp/exabgp.conf | Insira o seguinte cabeçalho:
+-Criar o diretório [mkdir /etc/exabgp]
+-Configure o arquivo localizado em nano /etc/exabgp/exabgp.conf | Insira o seguinte cabeçalho:
 					
 				             process announce-routes {
      					     run /usr/bin/socat stdout pipe:/var/run/exabgp.cmd;
@@ -76,8 +77,10 @@ WantedBy=multi-user.target
 					
 OBS: DESCOMENTE A LINHA #ExecStartPost=/bin/bash /opt/andrisoft/bin/WANresend CASO TENHA 
 O ARQUIVO CONFIGURADO (NECESSÁRIO PARA O FUNCIONAMENTO DO WANGUARD)
+
 --------------------------------------------------------------------------------------------------------------------
 -Execute o daemon [env exabgp.log.destination=syslog exabgp.daemon.daemonize=true exabgp /etc/exabgp/exabgp.conf]
+
 
 -Verifique o serviço [systemctl status exabgp]. Por si o serviço roda o reload para atualizar o aquivo e alera-
 ções feitas no serviço, caso necessário rode [systemctl start exabgp] ou [systemctl reload exabgp]. Se rodar esses
