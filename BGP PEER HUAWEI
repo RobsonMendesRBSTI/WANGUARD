@@ -31,3 +31,7 @@ route-policy EXPORT-WANGUARD deny node 1
 #
 route-policy EXPORT-WANGUARD deny node 100
 #
+
+
+ip community-filter basic BLACKHOLE-OPENX index 1 permit 65444:666
+ip ip-prefix FULL-ROUTE-WANGUARD index 20 permit 0.0.0.0 0 greater-equal 8 less-equal 32
