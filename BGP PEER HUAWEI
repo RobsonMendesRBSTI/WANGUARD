@@ -1,0 +1,33 @@
+peer 10.145.125.2 as-number 263270
+peer 10.145.125.2 description WANGUARD
+peer 10.145.125.2 connect-interface 10.145.125.1
+peer 10.145.125.2 enable
+peer 10.145.125.2 route-policy IMPORT-WANGUARD import
+peer 10.145.125.2 route-policy EXPORT-WANGUARD export
+peer 10.145.125.2 next-hop-local
+peer 10.145.125.2 advertise-community
+peer 10.145.125.2 enable
+peer 10.145.125.2 advertise-community
+peer 10.145.125.2 validation-disable
+
+
+
+ipv4-family flow
+peer 10.145.125.2 enable
+peer 10.145.125.2 advertise-community
+peer 10.145.125.2 validation-disable
+
+route-policy IMPORT-WANGUARD permit node 1
+ if-match ip-prefix FULL-ROUTE-SAFE
+ apply ip-address next-hop peer-address
+ apply community 65444:666
+ apply preferred-value 65535
+#
+route-policy IMPORT-WANGUARD deny node 100
+#
+
+#
+route-policy EXPORT-WANGUARD deny node 1
+#
+route-policy EXPORT-WANGUARD deny node 100
+#
