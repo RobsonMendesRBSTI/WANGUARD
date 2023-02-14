@@ -1,0 +1,193 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+CONSOLE INSTALLATION STEPS
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 1. Install the Andrisoft repository
+
+apt install apt-transport-https wget gnupg
+wget --no-check-certificate -O - https://www.andrisoft.com/andrisoft.gpg.key | apt-key add -
+echo "deb https://www.andrisoft.com/files/debian11 bullseye main" > /etc/apt/sources.list.d/andrisoft.list
+
+Step 2. Install the packages
+
+apt update
+apt install wanconsole
+nano /etc/systemd/timesyncd.conf #add your NTP server or uncomment the FallbackNTP line
+timedatectl set-ntp true
+timedatectl status
+
+Step 3. Configure MariaDB
+
+nano /etc/mysql/mariadb.conf.d/50-server.cnf #comment the bind-address directive
+systemctl restart mariadb 
+
+Step 4. Restart the Apache service
+In php.ini go to the [Date] section and set date.timezone to the correct value from http://php.net/manual/en/timezones.php and then restart the Apache service.
+
+nano /etc/php/7.4/apache2/php.ini #set date.timezone
+nano /etc/php/7.4/cli/php.ini #set date.timezone
+systemctl restart apache2
+
+Step 5. Install the database
+Finish installing the Console by running the /opt/andrisoft/bin/install_console script. 
+Enter the MariaDB root password or press Enter if none is set, and provide a password for a new database named "andrisoft". 
+In Debian 11, the recommended database storage engine is Aria.
+
+/opt/andrisoft/bin/install_console
+
+Step 6. Configure the WANsupervisor service
+The WANsupervisor daemon must be installed and started on all systems. You have to run the /opt/andrisoft/bin/install_supervisor script to enter 
+the Console's IP address and database password you set on step 5.
+
+/opt/andrisoft/bin/install_supervisor
+systemctl start WANsupervisor
+systemctl enable WANsupervisor
+
+Step 7. Install InfluxDB
+Install influxdb from https://portal.influxdata.com/downloads or from the link listed below
+and execute /opt/andrisoft/bin/install_influxdb to initialize the influxdb database.
+
+wget https://dl.influxdata.com/influxdb/releases/influxdb_1.8.10_amd64.deb
+dpkg -i ./influxdb_1.8.10_amd64.deb
+cp /etc/influxdb/influxdb.conf /etc/influxdb/influxdb.conf.backup
+cp /opt/andrisoft/etc/influxdb.conf /etc/influxdb/influxdb.conf
+systemctl restart influxdb
+/opt/andrisoft/bin/install_influxdb
+
+Step 8. Access the Console
+The Console web interface is accessible at http://<hostname>/wanguard or http://<hostname>/wansight, where <hostname> is the name or the IP of 
+the server running the Console. The default username is "admin" with the password "changeme". 
+It is highly recommended to install an SSL certificate in Apache to be able to connect to Console securely via HTTPS.
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+SENSOR INSTALLATION STEPS
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 1. Install the Andrisoft repository
+Add the Andrisoft repository to APT. You can skip these installation steps on the Console server.
+
+apt install apt-transport-https wget gnupg
+wget --no-check-certificate -O - https://www.andrisoft.com/andrisoft.gpg.key | apt-key add -
+echo "deb https://www.andrisoft.com/files/debian11 bullseye main" > /etc/apt/sources.list.d/andrisoft.list
+
+Step 2. Install the packages
+Install the wansensor package and dependencies. Configure and start systemd-timesyncd to prevent clock de-synchronization issues.
+
+apt update
+apt install wansensor
+nano /etc/systemd/timesyncd.conf #add your NTP server or uncomment the FallbackNTP line
+timedatectl set-ntp true
+timedatectl status
+
+Step 3. Install, configure and start the WANsupervisor service
+This step is required if you haven't previously installed and configured WANsupervisor on the target system.
+In order to configure the WANsupervisor service, you have to run the /opt/andrisoft/bin/install_supervisor script to
+enter the Console's IP address and database password.
+
+/opt/andrisoft/bin/install_supervisor
+systemctl start WANsupervisor
+systemctl enable WANsupervisor
+
+Step 4. Setup the Sensor
+Log into the Console to set up the Sensor(s). Sensors are started, monitored, and stopped by the WANsupervisor daemon, 
+so make sure the WANsupervisor service is always running.
+
+..................
+|ExaBGP - Install|
+''''''''''''''''''
+OS=debian 11 net-intall
+-----------------------------------------------------------------------------------------------------------------
+-Com o debian instalado, atualize o sistema = [apt update]
+
+-Instale a última versão do Python = [apt install pip (apt install python3-pip)]
+
+-Instale socat = [apt install socat] - Necessário para arquivo de log
+
+-Instale a última versão do ExaBGP = (A partir do debain 10, usar o repositório do python
+					https://pypi.org/project/exabgp/) [pip install -U exabgp]
+-Adicionar o usuário exabgp = adduser exabgp (Em caso de problema editar o arquivo [nano ~/.bashrc] e adicionar
+a seguinte linha no arquivo: export PATH="$PATH:/usr/sbin/" | Depois rode o comando [source ~/.bashrc] e o coman-
+do adduser iá vontar a funcionar.
+
+OBS: RODE UM APT UPDATE E UPGRADE PARA NÃO TER INSTALAÇÃO OBSOLETA DO REPOSITÓRIO.
+------------------------------------------------------------------------------------------------------------------
+-Criar o diretório [mkdir /etc/exabgp]
+-Configure o arquivo localizado em nano /etc/exabgp/exabgp.conf | Insira o seguinte cabeçalho:
+					
+				             process announce-routes {
+     					     run /usr/bin/socat stdout pipe:/var/run/exabgp.cmd;
+                                             encoder json;
+                                        }
+OBS: SEM O ; NO FINAL DO CÓDIGO, O EXABGP NÃO RECONHECE E GERA UM ERRO. OLHAR A SYNTAXE.
+------------------------------------------------------------------------------------------------------------------
+-Configure o serviço para que o processo do ExaBGP execute por si. Em /lib/systemd/system/exabgp.service insira:
+
+[Unit]
+Description=ExaBGP
+Documentation=man:exabgp(1)
+Documentation=man:exabgp.conf(5)
+Documentation=https://github.com/Exa-Networks/exabgp/wiki
+After=network.target
+ConditionPathExists=/etc/exabgp/exabgp.conf
+
+[Service]
+User=exabgp
+Group=exabgp
+Environment=exabgp_daemon_daemonize=false
+PermissionsStartOnly=true
+#-----------------------------------------------------------
+#-----------ExecStartPre------------------------------------
+#-----------Mkfifo------------------------------------------
+ExecStartPre=mkfifo /run/exabgp.in
+ExecStartPre=mkfifo /run/exabgp.out
+ExecStartPre=mkfifo /run/exabgp.cmd
+#-----------Chmod-------------------------------------------
+ExecStartPre=chmod 600 /run/exabgp.in
+ExecStartPre=chmod 600 /run/exabgp.out
+ExecStartPre=chmod 666 /run/exabgp.cmd
+#-----------Chown-------------------------------------------
+ExecStartPre=chown exabgp.exabgp /run/exabgp.in
+ExecStartPre=chown exabgp.exabgp /run/exabgp.out
+ExecStartPre=chown exabgp.exabgp /run/exabgp.cmd
+#-----------ExecStart-[file-execute]------------------------
+ExecStart=/usr/local/bin/exabgp /etc/exabgp/exabgp.conf
+#-----------Reload-[restartallconfig-newfiles]--------------
+ExecReload=/bin/kill -USR1 $MAINPID
+Restart=always
+ExecReload=rm /run/exabgp.cmd
+ExecReload=rm /run/exabgp.out
+ExecReload=rm /run/exabgp.in
+ExecStopPost=rm /run/exabgp.in
+ExecStopPost=rm /run/exabgp.out
+ExecStopPost=rm /run/exabgp.cmd
+#-----------------------------------------------------------
+#ExecStartPost=/bin/bash /opt/andrisoft/bin/WANresend
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target
+
+					
+OBS: DESCOMENTE A LINHA #ExecStartPost=/bin/bash /opt/andrisoft/bin/WANresend CASO TENHA 
+O ARQUIVO CONFIGURADO (NECESSÁRIO PARA O FUNCIONAMENTO DO WANGUARD)
+
+--------------------------------------------------------------------------------------------------------------------
+mkdir /run/exabgp
+mkfifo /run/exabgp.in
+mkfifo /run/exabgp.out
+chmod 600 /run/exabgp.in
+chmod 600 /run/exabgp.out
+-Execute o daemon [env exabgp.log.destination=syslog exabgp.daemon.daemonize=true exabgp /etc/exabgp/exabgp.conf]
+
+
+
+-Verifique o serviço [systemctl status exabgp]. Por si o serviço roda o reload para atualizar o aquivo e alera-
+ções feitas no serviço, caso necessário rode [systemctl start exabgp] ou [systemctl reload exabgp]. Se rodar esses
+dois últimos comandos irá travar o serviço, sendo necessário repetir os passos anteriores para que a instalação
+volte ao normal.
+--------------------------------------------------------------------------------------------------------------------
+-Para mais informações acessar:
+
+https://github.com/Exa-Networks/exabgp/wiki/Controlling-ExaBGP-:-interacting-from-the-API
+https://www.andrisoft.com/docs/wanguard/8.0/Appendix_4__Network_Integration_Guideline_for_Wanguard_Filter.html
+https://github.com/Exa-Networks/exabgp				
