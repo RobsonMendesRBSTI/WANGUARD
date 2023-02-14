@@ -94,9 +94,13 @@ so make sure the WANsupervisor service is always running.
 ..................
 |ExaBGP - Install|
 ''''''''''''''''''
+
 OS=debian 11 net-intall
 -----------------------------------------------------------------------------------------------------------------
+
 -Com o debian instalado, atualize o sistema = [apt update]
+
+-Criar o usuário exabg = [add user exabgp]
 
 -Instale a última versão do Python = [apt install pip (apt install python3-pip)]
 
