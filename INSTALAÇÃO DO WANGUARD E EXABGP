@@ -176,7 +176,6 @@ OBS: DESCOMENTE A LINHA #ExecStartPost=/bin/bash /opt/andrisoft/bin/WANresend CA
 O ARQUIVO CONFIGURADO (NECESSÁRIO PARA O FUNCIONAMENTO DO WANGUARD)
 
 --------------------------------------------------------------------------------------------------------------------
-mkdir /run/exabgp
 mkfifo /run/exabgp.in
 mkfifo /run/exabgp.out
 chmod 600 /run/exabgp.in
