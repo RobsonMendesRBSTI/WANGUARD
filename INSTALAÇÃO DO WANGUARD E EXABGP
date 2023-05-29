@@ -5,8 +5,8 @@ CONSOLE INSTALLATION STEPS
 Step 1. Install the Andrisoft repository
 
 apt install apt-transport-https wget gnupg
-wget --no-check-certificate -O - https://www.andrisoft.com/andrisoft.gpg.key | apt-key add -
-echo "deb https://www.andrisoft.com/files/debian11 bullseye main" > /etc/apt/sources.list.d/andrisoft.list
+wget -O - https://www.andrisoft.com/andrisoft.gpg.key | gpg --dearmor --yes --output /usr/share/keyrings/andrisoft-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/andrisoft-keyring.gpg] https://www.andrisoft.com/files/debian11 bullseye main" > /etc/apt/sources.list.d/andrisoft.list
 
 Step 2. Install the packages
 
@@ -100,7 +100,7 @@ OS=debian 11 net-intall
 
 -Com o debian instalado, atualize o sistema = [apt update]
 
--Criar o usuário exabg = [add user exabgp]
+-Criar o usuário exabg = [adduser exabgp]
 
 -Instale a última versão do Python = [apt install pip (apt install python3-pip)]
 
@@ -175,11 +175,34 @@ WantedBy=multi-user.target
 OBS: DESCOMENTE A LINHA #ExecStartPost=/bin/bash /opt/andrisoft/bin/WANresend CASO TENHA 
 O ARQUIVO CONFIGURADO (NECESSÁRIO PARA O FUNCIONAMENTO DO WANGUARD)
 
+nano /opt/andrisoft/bin/WANresend
+
+#!/bin/sh
+
+#Listar IDs das rotas ativas:
+query_sql() {
+        mysql -sN  -u root andrisoft -s -B -N -e "SELECT \`id\` FROM \`quagga\` WHERE \`status\` = 1;"
+}
+
+#Contar os IDs
+num=$(query_sql | wc -l)
+
+#Executar WANbgp resend  em cada ID
+sleep 2
+count=1
+until [ $count -gt $num ]
+do
+   id=$(query_sql |  sed -n ""$count"p")
+   /usr/bin/perl /opt/andrisoft/bin/WANbgp resend $id
+    count=$(( $count + 1 ))
+done
+
 --------------------------------------------------------------------------------------------------------------------
 mkfifo /run/exabgp.in
 mkfifo /run/exabgp.out
 chmod 600 /run/exabgp.in
 chmod 600 /run/exabgp.out
+exabgp --fi > /usr/local/etc/exabgp/exabgp.env
 -Execute o daemon [env exabgp.log.destination=syslog exabgp.daemon.daemonize=true exabgp /etc/exabgp/exabgp.conf]
 
 
